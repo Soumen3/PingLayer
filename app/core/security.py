@@ -19,12 +19,8 @@ Security Best Practices:
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from app.config import settings
-
-# Password hashing context
-# bcrypt is intentionally slow to prevent brute-force attacks
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
@@ -41,7 +37,15 @@ def hash_password(password: str) -> str:
         hashed = hash_password("mypassword123")
         # Returns: $2b$12$...
     """
-    return pwd_context.hash(password)
+    # Convert password to bytes
+    password_bytes = password.encode('utf-8')
+    
+    # Generate salt and hash
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    
+    # Return as string
+    return hashed.decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -58,7 +62,12 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Security:
         Uses constant-time comparison to prevent timing attacks
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    # Convert to bytes
+    password_bytes = plain_password.encode('utf-8')
+    hashed_bytes = hashed_password.encode('utf-8')
+    
+    # Verify
+    return bcrypt.checkpw(password_bytes, hashed_bytes)
 
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
