@@ -73,7 +73,7 @@ class Campaign(Base):
     
     # Status
     status = Column(
-        SQLEnum(CampaignStatus, name="campaign_status_enum", create_type=True),
+        SQLEnum(CampaignStatus, name="campaign_status_enum"),
         default=CampaignStatus.DRAFT,
         nullable=False,
         index=True
@@ -116,7 +116,7 @@ class Campaign(Base):
     @property
     def is_sendable(self) -> bool:
         """Check if campaign can be sent"""
-        return self.status == CampaignStatus.DRAFT and self.total_recipients > 0
+        return self.status in [CampaignStatus.DRAFT, CampaignStatus.SCHEDULED] and self.total_recipients > 0
     
     @property
     def success_rate(self) -> float:

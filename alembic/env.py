@@ -1,13 +1,44 @@
+"""
+Alembic Environment Configuration for PingLayer
+
+This file configures Alembic to work with PingLayer's database models.
+It imports all models and uses the database URL from settings.
+"""
+
 from logging.config import fileConfig
+import sys
+from pathlib import Path
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 
+# Add the parent directory to the path so we can import app modules
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+# Import your app's config and database
+from app.config import settings
+from app.database import Base
+
+# Import all models so Alembic can detect them
+from app.models import (
+    user,
+    company,
+    campaign,
+    recipient,
+    message_log,
+    smart_link,
+    click_event,
+    integration
+)
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# Override sqlalchemy.url with the one from settings
+config.set_main_option('sqlalchemy.url', settings.database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -16,9 +47,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -44,6 +73,8 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        compare_type=True,  # Detect column type changes
+        compare_server_default=True,  # Detect default value changes
     )
 
     with context.begin_transaction():
@@ -65,7 +96,10 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,  # Detect column type changes
+            compare_server_default=True,  # Detect default value changes
         )
 
         with context.begin_transaction():
@@ -76,3 +110,4 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+

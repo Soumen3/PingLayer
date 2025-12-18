@@ -183,18 +183,15 @@ async def health_check():
 # MODULE ROUTERS
 # ============================================================================
 
-# Import and register module routers
-# These will be implemented in the next steps
-
 from app.modules.auth.router import router as auth_router
+from app.modules.campaigns.router import router as campaigns_router
 # from app.modules.companies.router import router as companies_router
-# from app.modules.campaigns.router import router as campaigns_router
 # from app.modules.smartlinks.router import router as smartlinks_router
 # from app.modules.analytics.router import router as analytics_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(campaigns_router, prefix="/api/campaigns", tags=["Campaigns"])
 # app.include_router(companies_router, prefix="/api/companies", tags=["Companies"])
-# app.include_router(campaigns_router, prefix="/api/campaigns", tags=["Campaigns"])
 # app.include_router(smartlinks_router, prefix="/api/smartlinks", tags=["Smart Links"])
 # app.include_router(analytics_router, prefix="/api/analytics", tags=["Analytics"])
 
