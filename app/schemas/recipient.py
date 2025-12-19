@@ -9,8 +9,9 @@ Recipients can be added to campaigns via:
 3. Bulk JSON data
 """
 
+from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, EmailStr
 import re
 
 
@@ -26,6 +27,7 @@ class RecipientCreate(BaseModel):
         {
             "phone_number": "+1234567890",
             "name": "John Doe",
+            "email": "john@example.com",
             "custom_data": {
                 "company": "Acme Corp",
                 "link": "https://example.com/offer"
@@ -45,6 +47,13 @@ class RecipientCreate(BaseModel):
         max_length=255,
         description="Recipient name",
         examples=["John Doe"]
+    )
+    
+    email: Optional[str] = Field(
+        None,
+        max_length=255,
+        description="Recipient email address",
+        examples=["john@example.com"]
     )
     
     custom_data: Optional[Dict[str, Any]] = Field(
@@ -69,11 +78,26 @@ class RecipientCreate(BaseModel):
         
         return cleaned
     
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v: Optional[str]) -> Optional[str]:
+        """Validate email format"""
+        if v is None:
+            return v
+        
+        # Basic email validation
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, v):
+            raise ValueError("Invalid email format")
+        
+        return v.lower()  # Normalize to lowercase
+    
     model_config = {
         "json_schema_extra": {
             "example": {
                 "phone_number": "+1234567890",
                 "name": "John Doe",
+                "email": "john@example.com",
                 "custom_data": {
                     "company": "Acme Corp",
                     "link": "https://example.com/offer",
@@ -94,11 +118,13 @@ class RecipientBulkCreate(BaseModel):
                 {
                     "phone_number": "+1234567890",
                     "name": "John Doe",
+                    "email": "john@example.com",
                     "custom_data": {"company": "Acme"}
                 },
                 {
                     "phone_number": "+9876543210",
                     "name": "Jane Smith",
+                    "email": "jane@example.com",
                     "custom_data": {"company": "Beta Inc"}
                 }
             ]
@@ -155,8 +181,9 @@ class RecipientResponse(BaseModel):
     campaign_id: int = Field(..., description="Campaign ID")
     phone_number: str = Field(..., description="Phone number")
     name: Optional[str] = Field(None, description="Recipient name")
+    email: Optional[str] = Field(None, description="Recipient email")
     custom_data: Optional[Dict[str, Any]] = Field(None, description="Custom template data")
-    created_at: str = Field(..., description="Creation timestamp")
+    created_at: datetime = Field(..., description="Creation timestamp")
     
     model_config = {
         "from_attributes": True,
@@ -166,6 +193,7 @@ class RecipientResponse(BaseModel):
                 "campaign_id": 1,
                 "phone_number": "+1234567890",
                 "name": "John Doe",
+                "email": "john@example.com",
                 "custom_data": {
                     "company": "Acme Corp",
                     "link": "https://example.com"
